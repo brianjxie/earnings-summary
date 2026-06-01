@@ -1,0 +1,18 @@
+# Multi-sector dedup test fixture — semis + industrials both define book_to_bill;
+# semis defines gross_margin (which is in standard_headline and must be dropped).
+analyst: Multi-sector test
+slug: multi-test
+extends: [semis_hardware, industrials]
+
+estimates: {}
+
+output:
+  format: markdown
+  memo_dir: "./earnings-memos"
+
+preferences:
+  inline_band_pct: 2.0
+  eps_inline_band_abs: 0.02
+  pp_inline_band: 0.5
+  tone: "concise"
+  benchmark_convention: "consensus"

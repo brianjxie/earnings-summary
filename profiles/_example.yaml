@@ -1,0 +1,71 @@
+# Example analyst profile for the earnings-summary skill.
+#
+# One file per analyst at profiles/<analyst-slug>.yaml (slug = lowercase,
+# kebab-case of the analyst's name). Copy this file, rename it, and edit.
+#
+# The profile is a thin OVERLAY over kpi_catalog.yaml: it REFERENCES the sector
+# catalog by `sector + key` instead of copying metric definitions, so catalog
+# improvements (aliases, hints) flow through automatically. The standard memo
+# sections (financial summary, beat/miss scorecard, guidance, call highlights)
+# are ALWAYS produced regardless of this file; the metrics below are the EXTRA
+# fields this analyst tracks. The standard headline set (revenue, EPS, margins,
+# FCF, ...) is always pulled too — don't list it here.
+#
+# Resolve a profile to its final KPI list with:
+#   .venv/bin/python scripts/resolve_kpis.py --profile profiles/<slug>.yaml
+
+analyst: Jane Smith
+slug: jane-smith
+created: "2026-05-29"
+
+# --- Metric selection (the overlay) -----------------------------------------
+extends: [software_saas]        # one or more sector ids from kpi_catalog.yaml.
+                                # A company can span sectors, e.g. [payments_fintech, banks];
+                                # metrics that mean the same thing de-dupe to one row.
+pick: [arr, nrr, crpo]          # OPTIONAL subset of inherited keys. Omit `pick` to
+                                # take every metric in the `extends` sector(s).
+                                # Row order follows this list.
+
+add:                            # OPTIONAL custom metrics not in any catalog sector
+                                # (same shape as a catalog metric).
+  - key: pipeline_coverage
+    label: "Pipeline Coverage"
+    aliases: [pipeline-to-plan, coverage ratio]
+    unit: "x"
+    higher_is_better: true
+    extraction_hint: "Qualified pipeline vs next-quarter plan, if management gives it."
+
+override:                       # OPTIONAL per-key tweaks shallow-merged onto the
+                                # inherited catalog metric (relabel, change hint, etc.).
+  nrr: {label: "Net $ Retention (LTM)"}
+
+# Legacy (still supported): a flat inline `kpis:` list with NO `extends` is used
+# as-is. Prefer the overlay above for new profiles.
+# kpis:
+#   - {key: nrr, label: "Net Revenue Retention", aliases: [NRR], unit: "%", is_pp: true, higher_is_better: true, extraction_hint: "..."}
+
+# --- Per-ticker model estimates ---------------------------------------------
+# Keyed by ticker, then period label exactly as typed at run time. Keys match
+# headline metric keys (revenue, eps, op_margin, ...) and custom KPI labels.
+# Units match the metric's unit ($M revenue, $ EPS, % margins). Omit to paste
+# at run time.
+estimates:
+  CRM:
+    "FY26 Q1":
+      revenue: 9100        # $M
+      eps: 2.45            # $ (non-GAAP)
+      op_margin: 33.0      # %
+      "Net Revenue Retention": 107   # %
+      "cRPO": 29200        # $M
+
+# --- Output + thresholds -----------------------------------------------------
+output:
+  format: both            # markdown | pdf | both  (PDF rendered via reportlab)
+  memo_dir: "~/earnings-memos"   # ~ is expanded
+
+preferences:
+  inline_band_pct: 2.0       # |Δ| <= 2% vs a benchmark => IN-LINE (non-rate, non-EPS)
+  eps_inline_band_abs: 0.02  # EPS within ±$0.02 => IN-LINE
+  pp_inline_band: 0.5        # rate/margin metrics within ±0.5pp => IN-LINE
+  tone: "concise"            # concise | detailed
+  benchmark_convention: "consensus"  # which benchmark drives the headline BEAT/MISS read

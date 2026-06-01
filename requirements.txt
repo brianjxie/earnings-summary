@@ -1,0 +1,8 @@
+# compute_beat_miss.py: optional pyyaml (reads band defaults from a profile).
+# extract_pdf_text.py: reuses _shared/pdf_lib.py -> pdfplumber + pypdfium2.
+# find_edgar_release.py / fetch_url.py: standard library only (no deps).
+# render_pdf.py: reportlab (pure-Python; only needed for PDF output).
+pyyaml
+pdfplumber
+pypdfium2
+reportlab

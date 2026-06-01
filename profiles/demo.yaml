@@ -1,0 +1,23 @@
+# Demo profile (SaaS coverage) — Salesforce end-to-end demo run.
+# Overlay form: references kpi_catalog.yaml by sector + key instead of inlining
+# metric definitions. Resolve with:
+#   .venv/bin/python scripts/resolve_kpis.py --profile profiles/demo.yaml
+analyst: Demo (SaaS coverage)
+slug: demo
+created: "2026-05-29"
+
+extends: [software_saas]      # inherit the Software / SaaS metric set from the catalog
+pick: [crpo, rpo]             # this analyst tracks just cRPO + RPO (plus the standard headline set)
+
+estimates: {}
+
+output:
+  format: both
+  memo_dir: "./earnings-memos"
+
+preferences:
+  inline_band_pct: 2.0
+  eps_inline_band_abs: 0.02
+  pp_inline_band: 0.5
+  tone: "concise"
+  benchmark_convention: "consensus"

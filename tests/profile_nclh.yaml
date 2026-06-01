@@ -1,0 +1,14 @@
+# NCLH discovery-test profile (Stage 3 real-print verification).
+# A cruise operator mapped to its NEAREST catalog sector (consumer_retail) — an
+# intentionally imperfect fit: several consumer_retail standing metrics (same-store
+# sales, inventory, store count) are NOT disclosed by a cruise line, so this exercises
+# discovery's non-disclosure flagging AND its surfacing of cruise-specific KPIs the
+# catalog lacks (net yield, occupancy/load factor, Net Cruise Cost ex-fuel, ALBDs /
+# capacity days, advance ticket sales, onboard revenue).
+analyst: NCLH Discovery Test
+slug: nclh-test
+extends: [consumer_retail]
+
+estimates: {}
+output: {format: markdown, memo_dir: "./earnings-memos"}
+preferences: {inline_band_pct: 2.0, eps_inline_band_abs: 0.02, pp_inline_band: 0.5, tone: "concise", benchmark_convention: "consensus"}

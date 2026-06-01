@@ -1,0 +1,432 @@
+# KPI catalog — the cross-sector scaffold for the "which KPIs do you care about?" step.
+#
+# This is the reusable, sector-grouped vocabulary the analyst picks from. It is
+# NOT the per-analyst row layout — that's the profile (profiles/<slug>.yaml),
+# which REFERENCES this catalog by sector + key instead of copying definitions:
+#
+#   extends:  [software_saas]      # one or more sector ids (companies can span sectors)
+#   pick:     [arr, nrr, crpo]     # optional subset of inherited keys (default: all)
+#   add:      [ {full custom def} ]# metrics in no sector
+#   override: { nrr: {label: ...} }# tweak an inherited metric
+#
+# Overlapping sectors: a company can inherit from several sectors at once (e.g. a
+# fintech lender -> [payments_fintech, banks]). Metrics that mean the same thing
+# SHARE a `key` across sectors (gross_margin, take_rate, book_to_bill, fcf), so
+# the resolver de-dupes them to one row and unions their aliases. Shared keys MUST
+# agree on unit / is_pp / higher_is_better (enforced by scripts/validate_catalog.py).
+#
+# Per-metric fields:
+#   key              stable snake_case id (referenced by profiles; shared across
+#                    sectors when the concept is identical)
+#   label            display name in the memo
+#   aliases          other names the release/transcript may use (extractor hints)
+#   unit             "%" | "$" | "$M" | "$B" | "M" | "k" | "units" | "x" | ...
+#   is_pp            true for rate/percentage LEVELS (deltas shown in points)
+#   higher_is_better false for cost / churn / loss-type metrics
+#   extraction_hint  one line telling the extractor exactly what to grab
+#
+# Per-sector `themes`: the qualitative "points" that steer the memo's call
+# highlights (section 6) and watch items (section 7) toward what matters here.
+
+sectors:
+  - id: software_saas
+    label: "Software / SaaS"
+    kpis:
+      - key: arr
+        label: "ARR"
+        aliases: [annual recurring revenue]
+        unit: "$M"
+        higher_is_better: true
+        extraction_hint: "Ending annual recurring revenue (ARR)."
+      - key: nrr
+        label: "Net Revenue Retention"
+        aliases: [NRR, NDR, dollar-based net retention]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Dollar-based net revenue retention; in the release or on the call."
+      - key: grr
+        label: "Gross Revenue Retention"
+        aliases: [GRR]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Gross revenue retention (excludes expansion)."
+      - key: crpo
+        label: "cRPO"
+        aliases: [current remaining performance obligations, current RPO]
+        unit: "$M"
+        higher_is_better: true
+        extraction_hint: "Current remaining performance obligations (the <12-month portion of RPO)."
+      - key: rpo
+        label: "RPO"
+        aliases: [remaining performance obligations, total backlog, total RPO]
+        unit: "$M"
+        higher_is_better: true
+        extraction_hint: "Total remaining performance obligations."
+      - key: billings
+        label: "Billings"
+        aliases: [calculated billings]
+        unit: "$M"
+        higher_is_better: true
+        extraction_hint: "Calculated billings (revenue + change in deferred revenue), if disclosed."
+      - key: fcf_margin
+        label: "FCF Margin"
+        aliases: [free cash flow margin]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Free cash flow as a % of revenue."
+      - key: rule_of_40
+        label: "Rule of 40"
+        aliases: [rule-of-40]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Revenue growth % + FCF (or operating) margin %. If not disclosed, leave blank — do not compute."
+    themes:
+      - "Net retention / churn trajectory"
+      - "cRPO & billings durability vs reported revenue"
+      - "AI / new-product monetization"
+      - "Operating margin & FCF path (Rule of 40)"
+      - "Deal cycles / macro on new business"
+
+  - id: consumer_retail
+    label: "Consumer / Retail"
+    kpis:
+      - key: comparable_sales
+        label: "Comparable Sales"
+        aliases: [comps, same-store sales, SSS, comparable store sales]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Comparable / same-store sales growth for the period."
+      - key: traffic
+        label: "Traffic"
+        aliases: [transactions, foot traffic, ticket count]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Change in transactions / traffic (the volume half of the comp)."
+      - key: average_ticket
+        label: "Average Ticket"
+        aliases: [average transaction value, AUR, average unit retail]
+        unit: "$"
+        higher_is_better: true
+        extraction_hint: "Average ticket / transaction value (the price half of the comp)."
+      - key: gross_margin
+        label: "Gross Margin"
+        aliases: [merchandise margin]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Merchandise / product gross margin."
+      - key: inventory
+        label: "Inventory"
+        aliases: [inventory levels, inventory $, merchandise inventory]
+        unit: "$M"
+        higher_is_better: false
+        extraction_hint: "Period-end inventory balance; compare growth vs sales growth."
+      - key: store_count
+        label: "Store Count"
+        aliases: [units, doors, net new stores]
+        unit: "units"
+        higher_is_better: true
+        extraction_hint: "Total store/unit count, or net new units in the period."
+    themes:
+      - "Comp drivers: traffic vs ticket"
+      - "Gross margin, promotions & markdowns"
+      - "Inventory health vs sales growth"
+      - "Unit growth / store productivity"
+      - "Consumer demand & category mix"
+
+  - id: internet_ads
+    label: "Internet / Advertising"
+    kpis:
+      - key: mau
+        label: "MAU"
+        aliases: [monthly active users]
+        unit: "M"
+        higher_is_better: true
+        extraction_hint: "Monthly active users."
+      - key: dau
+        label: "DAU"
+        aliases: [daily active users]
+        unit: "M"
+        higher_is_better: true
+        extraction_hint: "Daily active users."
+      - key: arpu
+        label: "ARPU"
+        aliases: [average revenue per user]
+        unit: "$"
+        higher_is_better: true
+        extraction_hint: "Average revenue per user/member for the period."
+      - key: ad_revenue
+        label: "Ad Revenue"
+        aliases: [advertising revenue]
+        unit: "$M"
+        higher_is_better: true
+        extraction_hint: "Advertising revenue line."
+      - key: take_rate
+        label: "Take Rate"
+        aliases: [monetization rate]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Monetization / take rate, if disclosed."
+    themes:
+      - "Engagement trends (DAU/MAU)"
+      - "Ad pricing vs impressions/volume"
+      - "Monetization / take-rate"
+      - "AI on ranking & recommendations"
+      - "Regulatory / privacy headwinds"
+
+  - id: banks
+    label: "Banks / Financials"
+    kpis:
+      - key: nim
+        label: "Net Interest Margin"
+        aliases: [NIM]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Net interest margin for the period."
+      - key: nii
+        label: "Net Interest Income"
+        aliases: [NII]
+        unit: "$M"
+        higher_is_better: true
+        extraction_hint: "Net interest income."
+      - key: nco
+        label: "Net Charge-offs"
+        aliases: [NCOs, charge-off rate, net charge-off ratio]
+        unit: "%"
+        is_pp: true
+        higher_is_better: false
+        extraction_hint: "Net charge-off rate (annualized, as a % of loans)."
+      - key: provision_credit_losses
+        label: "Provision for Credit Losses"
+        aliases: [PCL, loan loss provision, provision expense]
+        unit: "$M"
+        higher_is_better: false
+        extraction_hint: "Provision for credit losses for the period."
+      - key: cet1_ratio
+        label: "CET1 Ratio"
+        aliases: [common equity tier 1, CET1]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Common equity tier 1 capital ratio."
+      - key: efficiency_ratio
+        label: "Efficiency Ratio"
+        aliases: [cost-to-income ratio]
+        unit: "%"
+        is_pp: true
+        higher_is_better: false
+        extraction_hint: "Efficiency ratio (noninterest expense / revenue); lower is better."
+      - key: tbvps
+        label: "Tangible Book Value/Share"
+        aliases: [TBVPS, tangible book value per share]
+        unit: "$"
+        higher_is_better: true
+        extraction_hint: "Tangible book value per share at period end."
+    themes:
+      - "NIM trajectory & deposit costs/betas"
+      - "Credit quality (NCOs, reserves, NPLs)"
+      - "Loan & deposit growth"
+      - "Capital return (CET1, buybacks, dividend)"
+      - "Fee income & expense discipline"
+
+  - id: payments_fintech
+    label: "Payments / Fintech"
+    kpis:
+      - key: tpv
+        label: "TPV"
+        aliases: [total payment volume, GMV, gross merchandise volume]
+        unit: "$B"
+        higher_is_better: true
+        extraction_hint: "Total payment volume / GMV processed in the period."
+      - key: take_rate
+        label: "Take Rate"
+        aliases: [transaction margin, monetization rate]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Revenue (or transaction profit) as a % of TPV/GMV."
+      - key: active_accounts
+        label: "Active Accounts"
+        aliases: [active users, active customers]
+        unit: "M"
+        higher_is_better: true
+        extraction_hint: "Active accounts / customers at period end."
+    themes:
+      - "TPV / volume growth & mix"
+      - "Take-rate trajectory"
+      - "Active-account / engagement growth"
+      - "Credit & loss performance (if lending)"
+      - "Incremental margins on volume"
+
+  - id: semis_hardware
+    label: "Semiconductors / Hardware"
+    kpis:
+      - key: data_center_revenue
+        label: "Data Center Revenue"
+        aliases: [DC revenue, datacenter revenue]
+        unit: "$M"
+        higher_is_better: true
+        extraction_hint: "Data-center segment revenue."
+      - key: gross_margin
+        label: "Gross Margin"
+        aliases: [non-GAAP gross margin]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Gross margin (state GAAP vs non-GAAP basis)."
+      - key: book_to_bill
+        label: "Book-to-Bill"
+        aliases: [book to bill ratio]
+        unit: "x"
+        higher_is_better: true
+        extraction_hint: "Book-to-bill ratio (orders / billings), if disclosed."
+      - key: utilization
+        label: "Utilization"
+        aliases: [fab utilization, capacity utilization]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Fab / capacity utilization rate."
+    themes:
+      - "End-demand & order trends (book-to-bill)"
+      - "Gross margin, pricing & mix"
+      - "Capacity / utilization & supply"
+      - "Channel inventory"
+      - "Data-center / AI demand"
+
+  - id: biotech_pharma
+    label: "Biotech / Pharma"
+    kpis:
+      - key: product_revenue
+        label: "Product Revenue"
+        aliases: [net product sales, net product revenue]
+        unit: "$M"
+        higher_is_better: true
+        extraction_hint: "Net product sales for the key marketed drug(s)."
+      - key: trx_volume
+        label: "TRx Volume"
+        aliases: [total prescriptions, scripts, NRx]
+        unit: "k"
+        higher_is_better: true
+        extraction_hint: "Total prescription (TRx) volume, if disclosed."
+      - key: gross_to_net
+        label: "Gross-to-Net"
+        aliases: [GTN, gross-to-net adjustment]
+        unit: "%"
+        is_pp: true
+        higher_is_better: false
+        extraction_hint: "Gross-to-net discount %; higher erodes net price."
+      - key: rd_expense
+        label: "R&D Expense"
+        aliases: [research and development]
+        unit: "$M"
+        higher_is_better: false
+        extraction_hint: "Research & development expense for the period."
+      - key: cash_runway
+        label: "Cash Runway"
+        aliases: [cash and equivalents, runway]
+        unit: "$M"
+        higher_is_better: true
+        extraction_hint: "Cash, equivalents & investments at period end (the runway base)."
+    themes:
+      - "Launch trajectory & TRx uptake"
+      - "Pricing / gross-to-net dynamics"
+      - "Pipeline readouts & regulatory timelines"
+      - "R&D spend & cash runway"
+      - "Competition / LOE exposure"
+
+  - id: energy
+    label: "Energy / E&P"
+    kpis:
+      - key: production
+        label: "Production"
+        aliases: [total production, BOE/d, volumes]
+        unit: "k"
+        higher_is_better: true
+        extraction_hint: "Total production volumes (state units, e.g. MBOE/d)."
+      - key: realized_price
+        label: "Realized Price"
+        aliases: [realizations, realized pricing]
+        unit: "$"
+        higher_is_better: true
+        extraction_hint: "Average realized price per unit (note pre- vs post-hedge)."
+      - key: lifting_costs
+        label: "Lifting Costs"
+        aliases: [LOE, lease operating expense, cash costs per boe]
+        unit: "$"
+        higher_is_better: false
+        extraction_hint: "Lease operating / lifting cost per BOE."
+      - key: capex
+        label: "Capex"
+        aliases: [capital expenditure, capital spending]
+        unit: "$M"
+        higher_is_better: false
+        extraction_hint: "Capital expenditure for the period."
+      - key: fcf
+        label: "Free Cash Flow"
+        aliases: [free cash flow]
+        unit: "$M"
+        higher_is_better: true
+        extraction_hint: "Free cash flow (operating cash flow less capex)."
+    themes:
+      - "Production volumes vs plan"
+      - "Realized pricing & differentials"
+      - "Cost control (LOE, capex discipline)"
+      - "FCF & capital return"
+      - "Breakevens / reserve outlook"
+
+  - id: industrials
+    label: "Industrials"
+    kpis:
+      - key: organic_growth
+        label: "Organic Growth"
+        aliases: [organic revenue growth, core growth]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Organic (ex-FX, ex-M&A) revenue growth."
+      - key: book_to_bill
+        label: "Book-to-Bill"
+        aliases: [book to bill ratio]
+        unit: "x"
+        higher_is_better: true
+        extraction_hint: "Book-to-bill ratio (orders / sales), if disclosed."
+      - key: backlog
+        label: "Backlog"
+        aliases: [order backlog]
+        unit: "$M"
+        higher_is_better: true
+        extraction_hint: "Total order backlog at period end."
+      - key: incremental_margin
+        label: "Incremental Margin"
+        aliases: [incrementals, decrementals]
+        unit: "%"
+        is_pp: true
+        higher_is_better: true
+        extraction_hint: "Incremental (or decremental) operating margin on the revenue change."
+    themes:
+      - "Organic growth: price vs volume"
+      - "Orders & backlog (book-to-bill)"
+      - "Incremental / decremental margins"
+      - "Cost & productivity actions"
+      - "End-market & cycle commentary"
+
+# Metrics produced for EVERY company regardless of sector. The extractor always
+# pulls these (see extraction_prompt.md); do NOT duplicate them in a profile.
+# Sector metrics that share one of these keys (e.g. gross_margin, fcf) are
+# de-duped against this set by the resolver so a row never appears twice.
+standard_headline:
+  - {key: revenue, label: "Total Revenue", unit: "$M", higher_is_better: true}
+  - {key: revenue_growth, label: "Revenue Growth YoY", unit: "%", is_pp: true, higher_is_better: true}
+  - {key: gross_margin, label: "Gross Margin", unit: "%", is_pp: true, higher_is_better: true}
+  - {key: op_margin, label: "Operating Margin", unit: "%", is_pp: true, higher_is_better: true}
+  - {key: eps, label: "EPS", unit: "$", is_eps: true, higher_is_better: true}
+  - {key: fcf, label: "Free Cash Flow", unit: "$M", higher_is_better: true}

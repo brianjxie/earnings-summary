@@ -1,0 +1,19 @@
+# Biotech profile fixture (Stage 2 render test) — exercises pick + add + override.
+analyst: Bio Test
+slug: bio-test
+extends: [biotech_pharma]
+pick: [product_revenue, trx_volume, gross_to_net, cash_runway]
+add:
+  - key: pos_ph3
+    label: "Phase 3 PoS"
+    aliases: [probability of success, PoS]
+    unit: "%"
+    is_pp: true
+    higher_is_better: true
+    extraction_hint: "Management-stated probability of success for the lead Phase 3, if given."
+override:
+  product_revenue: {label: "Tegsedi Net Sales"}
+
+estimates: {}
+output: {format: markdown, memo_dir: "./earnings-memos"}
+preferences: {inline_band_pct: 2.0, eps_inline_band_abs: 0.02, pp_inline_band: 0.5, tone: "concise", benchmark_convention: "consensus"}

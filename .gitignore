@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Live run outputs + cache (examples/ is committed deliberately; this is for real runs)
+earnings-memos/
+**/.cache/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Secrets / env
+.env
+.env.*
