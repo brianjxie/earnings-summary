@@ -10,37 +10,58 @@ An analyst invokes it as `/earnings-summary`, answers a short intake (company, q
 
 ## How it works
 
-The skill is a pipeline. The colors below mark the trust boundary — what an AI agent does (and a human always reviews) versus what is computed deterministically and can't drift:
+The skill is a pipeline. The diagram shows what's **live today** — colored by the trust boundary between what an AI agent *drafts* and what deterministic Python *computes* — plus where it's **headed** (amber, dashed): pushing the numbers straight into the analyst's model so their earnings-day busywork is automated and they can focus on the trade.
 
 ```mermaid
 flowchart TD
-    Start([Analyst picks the company, the quarter, and which analyst profile]):::human
-    Profile[Load that analyst's saved profile:<br>their KPIs, model estimates, output prefs]:::data
-    Find{How is the release provided?}:::data
-    Edgar[Find the 8-K and Exhibit 99.1 on EDGAR]:::det
-    Read[Read the release text and the call transcript]:::data
-    Discover[[Discovery — read THIS print:<br>which standing metrics are disclosed?<br>propose company-specific KPIs]]:::agent
-    Approve{Analyst reviews and approves<br>the metric plan}:::human
-    Extract[[Extraction — pull every number,<br>each with a verbatim source quote]]:::agent
-    Beat[/Score every metric in Python:<br>beat, miss, or in-line vs model AND Street/]:::det
-    Guide[/Reconcile guidance across prior quarters:<br>where was each number last set?/]:::det
-    Assemble[[Assemble the memo around the computed<br>tables — numbers are never re-typed]]:::agent
-    Out([Markdown memo plus styled PDF]):::human
+    subgraph CUR ["Current — live today"]
+        Start([Analyst picks the company, the quarter, and which analyst profile]):::human
+        Profile[Load that analyst's saved profile:<br>the KPIs and model estimates they track]:::data
+        Find{How is the release provided?}:::data
+        Edgar[Find the 8-K and Exhibit 99.1 on EDGAR]:::det
+        Read[Read the release text and the call transcript]:::data
+        Discover[[Discovery — read THIS print:<br>which metrics are disclosed?<br>propose company-specific KPIs]]:::agent
+        Approve{Analyst reviews and approves<br>the metric plan}:::human
+        Extract[[Extraction — pull every number,<br>each with a verbatim source quote]]:::agent
+        Beat[/Score every metric in Python:<br>beat, miss, or in-line vs model AND Street/]:::det
+        Guide[/Reconcile guidance across prior quarters:<br>where was each number last set?/]:::det
+        Assemble[[Assemble the memo around the computed<br>tables — numbers are never re-typed]]:::agent
+        Memo([Markdown memo plus styled PDF]):::human
 
-    Start --> Profile --> Find
-    Find -->|just a ticker| Edgar --> Read
-    Find -->|link, PDF, or pasted text| Read
-    Read --> Discover --> Approve --> Extract --> Beat --> Guide --> Assemble --> Out
+        Start --> Profile --> Find
+        Find -->|just a ticker| Edgar --> Read
+        Find -->|link, PDF, or pasted text| Read
+        Read --> Discover --> Approve --> Extract --> Beat --> Guide --> Assemble --> Memo
+    end
+
+    subgraph FUT ["Future — to build: earnings numbers flow into the model"]
+        Model[(The analyst's live model — Excel)]:::todo
+        Map[Map each tracked metric and period<br>to its cell in the model]:::todo
+        Hist[[Backfill prior-quarter actuals<br>into the model's history columns]]:::todo
+        Write[[Stage this quarter's actuals + new guidance<br>into a backed-up copy — every cell<br>highlighted and source-quoted]]:::todo
+        OkModel{Analyst reviews the proposed<br>cell edits and approves}:::todo
+        Trade([Model updated — analyst focuses on the trade]):::todo
+
+        Model --> Map --> Hist --> Write --> OkModel --> Trade
+    end
+
+    Profile -.->|the metrics they track| Map
+    Edgar -.->|prior-quarter actuals| Hist
+    Extract -.->|actuals + quotes| Write
+    Guide -.->|new + prior guidance| Write
 
     classDef human fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a;
     classDef agent fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95;
     classDef det fill:#dcfce7,stroke:#22c55e,color:#14532d;
     classDef data fill:#f1f5f9,stroke:#94a3b8,color:#0f172a;
+    classDef todo fill:#fff7ed,stroke:#f97316,color:#7c2d12,stroke-dasharray: 5 5;
 ```
 
-🔵 **Analyst** — decisions and the deliverable (a human in the loop) · 🟣 **AI agent** — reads and proposes, *always reviewed* · 🟢 **Deterministic Python** — math and provenance, *never the model* · ⚪ **Data handling**
+🔵 **Analyst** · 🟣 **AI agent** — reads and proposes, *always reviewed* · 🟢 **Deterministic Python** — math and provenance, *never the model* · ⚪ **Data** · 🟧 **Future** — dashed, not built yet
 
 The split is the whole point: the language model is good at *reading* a messy press release and *drafting* prose, and bad at *not quietly miscomputing a percentage*. So every number that lands in the memo is computed by `compute_beat_miss.py` / `reconcile_guidance.py`, and the assembling agent pastes those tables verbatim — it is structurally prevented from re-typing a figure.
+
+**Where it's headed.** Today the skill *reads* the print and writes a memo; the next build closes the loop into the analyst's **model**. It would read their live Excel model, map each tracked metric and period to a cell, backfill the historical columns from the prior-quarter releases it already fetches, and stage this quarter's actuals + new guidance straight into those cells — each one highlighted and carrying its source quote, written to a backed-up copy for the analyst to approve. Same propose → approve → write discipline as the rest of the skill, so the earnings-day mechanics get automated and the analyst's attention goes to the trade.
 
 ---
 
