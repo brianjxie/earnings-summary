@@ -12,52 +12,13 @@ An analyst invokes it as `/earnings-summary`, answers a short intake (company, q
 
 The skill runs as a three-phase flowchart: **① pick what to track** (any of three ways), **② pull the print** (live today), and **③ edit the model directly** (the goal, still to build). Whichever way the analyst picks their metrics, everything converges into updating their model — so their earnings-day busywork is automated and they can focus on the trade. Node color marks the trust boundary (the AI *drafts*, Python *computes*); amber + dashed marks what's still to build.
 
-```mermaid
-flowchart TD
-    subgraph PICK ["1 — Pick what to track (any of 3 ways)"]
-        A1[Reuse a saved profile<br>— KPIs tracked before]:::data
-        A2[Build from the<br>cross-sector KPI catalog]:::data
-        A3[Infer from a prior earnings report<br>the analyst already wrote]:::todo
-        Metrics[The analyst's metric set<br>+ their model estimates]:::data
-        A1 --> Metrics
-        A2 --> Metrics
-        A3 -.-> Metrics
-    end
-
-    subgraph RUN ["2 — Pull the print (live today)"]
-        Get[Find the release on EDGAR<br>and read the call transcript]:::det
-        Disc[[Discovery — confirm what<br>THIS print discloses]]:::agent
-        OK1{Analyst approves<br>the metric plan}:::human
-        Ext[[Extraction — every number<br>with a verbatim source quote]]:::agent
-        Score[/Score in Python — beat, miss, or in-line<br>vs model and Street, plus guidance/]:::det
-        Memo([Memo + styled PDF]):::human
-        Get --> Disc --> OK1 --> Ext --> Score --> Memo
-    end
-
-    subgraph MODEL ["3 — Edit the model directly (the goal, to build)"]
-        Map[Map each metric + period<br>to its cell in the model]:::todo
-        Hist[[Backfill history columns<br>from prior-quarter actuals]]:::todo
-        Write[[Write this quarter's actuals + guidance<br>into the cells — staged, sourced, backed up]]:::todo
-        OK2{Analyst approves<br>the cell edits}:::todo
-        Trade([Model updated —<br>analyst focuses on the trade]):::todo
-        Map --> Hist --> Write --> OK2 --> Trade
-    end
-
-    Metrics --> Get
-    Score -.->|the same numbers flow into the model| Map
-
-    classDef human fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a;
-    classDef agent fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95;
-    classDef det fill:#dcfce7,stroke:#22c55e,color:#14532d;
-    classDef data fill:#f1f5f9,stroke:#94a3b8,color:#0f172a;
-    classDef todo fill:#fff7ed,stroke:#f97316,color:#7c2d12,stroke-dasharray: 5 5;
-```
+![earnings-summary — three-phase flow: pick what to track → pull the print → edit the model](docs/earnings_summary_flow.png)
 
 🔵 **Analyst** (in the loop) · 🟣 **AI agent** — reads & proposes, *always reviewed* · 🟢 **Deterministic Python** — the math, *never the model* · ⚪ **Data** · 🟧 **To build** — dashed
 
 The trust boundary is the whole point: the language model is good at *reading* a messy press release and *drafting* prose, and bad at *not quietly miscomputing a percentage*. So every number is computed by `compute_beat_miss.py` / `reconcile_guidance.py`, and the agent pastes those tables verbatim — it is structurally prevented from re-typing a figure.
 
-**Where it's headed.** Two pieces are still to build (amber, dashed). First, a third way to pick metrics: if the analyst already wrote an earnings report for this name, parse it to infer the KPIs and line items they track — the strongest signal of what they care about, since they've already shown it. Second, the payoff — **editing the model directly**: map each tracked metric and period to its cell, backfill the history columns from the prior releases the skill already fetches, and write this quarter's actuals + new guidance into the cells (highlighted, source-quoted, staged on a backed-up copy for approval). Same propose → approve → write discipline throughout, so however the metrics get chosen, the flow ends in an updated model and the analyst's attention goes to the trade.
+**Where it's headed.** The amber, dashed phase is the payoff still to build — **editing the model directly**: map each tracked metric and period to its cell, backfill the history columns from the prior releases the skill already fetches, and write this quarter's actuals + new guidance into the cells (highlighted, source-quoted, staged on a backed-up copy for approval). Same propose → approve → write discipline throughout, so however the metrics get chosen, the flow ends in an updated model and the analyst's attention goes to the trade.
 
 ---
 
